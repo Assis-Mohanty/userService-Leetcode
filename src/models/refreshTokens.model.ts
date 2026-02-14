@@ -1,4 +1,12 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
+
+export interface IRefreshToken extends Document {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  revoked: boolean;
+}
+
 
 const refreshTokenSchema = new mongoose.Schema({
   userId: { type: String, required: true },

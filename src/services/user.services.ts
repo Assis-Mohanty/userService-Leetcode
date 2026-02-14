@@ -3,7 +3,7 @@ import { RegisterUserDto } from "../dto/user.dto"
 import { IUser } from "../models/user.models"
 import { IUserRepository } from "../repository/user.repository"
 import { compareHashPassword, HashPassword, hashToken } from "../utils/hash/generateHashPassword"
-import { generateJWT } from "../utils/jwt"
+import { generateJWT, verifyJWT } from "../utils/jwt"
 
 export interface IUserService{
     Register(data:RegisterUserDto):Promise<IUser>
@@ -12,6 +12,9 @@ export interface IUserService{
     UpdateUser(userId:string,update:Partial<IUser>):Promise<IUser | null >
     deleteById(userId: string): Promise<boolean>
     GetMe(userId:string):Promise<IUser | null>
+    Login(username:string,password:string):Promise<{accessToken:string, refreshToken:string}>
+    RefreshToken(oldRefreshToken:string):Promise<{accessToken:string, refreshToken:string}>
+    updateRating(userId:string,newRating:number):Promise<IUser | null>
 }
 
 export class  UserService implements IUserService{
@@ -62,7 +65,7 @@ export class  UserService implements IUserService{
         "7d"
         );
         const tokenhash = hashToken(jwtRefresh);
-        await this.userRepository.saveRefreshToken(user._id.toString(),tokenhash,new Date(Date.now() + 7*24*60*60*1000));
+        await this.userRepository.saveRefreshToken(user._id.toString(),tokenhash,new Date(Date.now() + 7*24*60*60*1000),false);
         
         console.log("Generated JWT:", jwtAccess);
         console.log("Generated Refresh Token:", jwtRefresh);
@@ -73,5 +76,44 @@ export class  UserService implements IUserService{
     }
     async GetMe(userId: string):Promise<IUser | null>{
         return await this.userRepository.GetUser(userId)
+    }
+    async RefreshToken(oldRefreshToken:string):Promise<{accessToken:string, refreshToken:string}>{
+        const tokenHash = hashToken(oldRefreshToken);
+        const decoded = await verifyJWT(oldRefreshToken,serverConfig.JWT_REFRESH_SECRET);
+        const storedToken = await this.userRepository.findRefreshTokenByHash(tokenHash);
+        if(!storedToken){
+            throw new Error("Invalid refresh token");
+        }
+        await this.userRepository.revokeRefreshToken(tokenHash);
+        const user = await this.userRepository.GetUser(decoded.userId);
+        if(!user){
+            throw new Error("User not found");
+        }
+        const jwtAccess = await generateJWT({
+            userId:user._id.toString(),
+            username:user.username,
+            role:user.role
+        },serverConfig.JWT_ACCESS_SECRET,
+        "15m"
+        );
+        const jwtRefresh = await generateJWT({
+            userId:user._id.toString(),
+            username:user.username,
+            role:user.role
+        },serverConfig.JWT_REFRESH_SECRET,
+        "7d"
+        );
+        const newTokenHash = hashToken(jwtRefresh);
+        await this.userRepository.saveRefreshToken(user._id.toString(),newTokenHash,new Date(Date.now() + 7*24*60*60*1000),false);
+        
+        console.log("Generated JWT:", jwtAccess);
+        console.log("Generated Refresh Token:", jwtRefresh);
+        return {
+            accessToken:jwtAccess,
+            refreshToken:jwtRefresh
+        }
+    }
+    updateRating(userId: string, newRating: number): Promise<IUser | null> {
+        return this.userRepository.updateRating(userId, newRating);
     }
 }

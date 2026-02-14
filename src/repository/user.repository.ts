@@ -1,4 +1,4 @@
-import { RefreshToken } from "../models/refreshTokens.model";
+import { IRefreshToken, RefreshToken } from "../models/refreshTokens.model";
 import { IUser, User } from "../models/user.models";
 
 export interface IUserRepository{
@@ -8,7 +8,10 @@ export interface IUserRepository{
     UpdateUser(userId:string,update:Partial<IUser>):Promise<IUser | null >
     deleteById(userId: string): Promise<boolean>
     findByUsername(username:string):Promise<IUser | null>
-    saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date):Promise<void>
+    saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date,revoked:boolean):Promise<void>
+    findRefreshTokenByHash(tokenHash:string):Promise<IRefreshToken | null>
+    revokeRefreshToken(tokenHash:string):Promise<void>
+    updateRating(userId:string,newRating:number):Promise<IUser | null>
 }
 
 export class UserRepository implements IUserRepository{
@@ -38,13 +41,34 @@ export class UserRepository implements IUserRepository{
     async findByUsername(username: string): Promise<IUser | null> {
         return await User.findOne({username:username});
     }
-    async saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date):Promise<void>{
+    async saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date,revoked:boolean):Promise<void>{
         const refreshToken = new RefreshToken({
             userId,
             tokenHash,
             expiresAt,
-            revoked:false
+            revoked:revoked
         })
         await refreshToken.save();
+    }
+    async findRefreshTokenByHash(tokenHash: string): Promise<IRefreshToken | null> {
+        const refreshToken = await RefreshToken.findOne({tokenHash:tokenHash,revoked:false,expiresAt:{$gt:new Date()}});
+        return refreshToken
+    }
+    async revokeRefreshToken(tokenHash: string): Promise<void> {
+        const token = await RefreshToken.findOne({tokenHash:tokenHash});
+        if(token){
+            token.revoked = true;
+            await token.save();
+        }
+        return;
+    }
+    async updateRating(userId: string, newRating: number): Promise<IUser | null> {
+        const user = await User.findById(userId);
+        if (!user) {
+            return null;
+        }
+        user.rating = newRating;
+        await user.save();
+        return user;
     }
 }
