@@ -1,9 +1,5 @@
-import { serverConfig } from "../config";
+import { RefreshToken } from "../models/refreshTokens.model";
 import { IUser, User } from "../models/user.models";
-import { compareHashPassword } from "../utils/hash/generateHashPassword";
-import { generateJWT } from "../utils/jwt";
-
-
 
 export interface IUserRepository{
     Register(data:Partial<IUser>):Promise<IUser>
@@ -11,7 +7,8 @@ export interface IUserRepository{
     GetUser(userId:string):Promise<IUser| null>
     UpdateUser(userId:string,update:Partial<IUser>):Promise<IUser | null >
     deleteById(userId: string): Promise<boolean>
-    Login(username:string,password:string):Promise<string>
+    findByUsername(username:string):Promise<IUser | null>
+    saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date):Promise<void>
 }
 
 export class UserRepository implements IUserRepository{
@@ -37,23 +34,17 @@ export class UserRepository implements IUserRepository{
         const result = await User.findByIdAndDelete(userId);
         return result !== null;
     }
-    async Login(username:string,password:string):Promise<string>{
-        const user = await User.findOne({username:username});
-        if(!user){
-            throw new Error("User not found");
-        }
-        const isValid = await compareHashPassword(password,user.passwordHash);
-        if(!isValid){
-            throw new Error("Invalid password");
-        }
-        const jwt = await generateJWT({
-            userId:user._id.toString(),
-            username:user.username,
-            role:user.role
-        },serverConfig.JWT_SECRET,
-        "1h"
-        );
-        console.log("Generated JWT:", jwt);
-        return jwt;
+    
+    async findByUsername(username: string): Promise<IUser | null> {
+        return await User.findOne({username:username});
+    }
+    async saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date):Promise<void>{
+        const refreshToken = new RefreshToken({
+            userId,
+            tokenHash,
+            expiresAt,
+            revoked:false
+        })
+        await refreshToken.save();
     }
 }

@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 type ServerConfig = {
     PORT: number,
     MONGO_DB_URL:string,
-    JWT_SECRET:string
+    JWT_ACCESS_SECRET:string,
+    JWT_REFRESH_SECRET:string
 }
 
 function loadEnv() {
@@ -17,5 +18,6 @@ loadEnv();
 export const serverConfig: ServerConfig = {
     PORT: Number(process.env.PORT) || 3004,
     MONGO_DB_URL:process.env.MONGO_DB_URL || "mongodb://localhost:27017/leetcode",
-    JWT_SECRET:process.env.JWT_SECRET || "aksdkasnmdadsm"
+    JWT_ACCESS_SECRET:process.env.JWT_ACCESS_SECRET || "aksdkasnmdadsm",
+    JWT_REFRESH_SECRET:process.env.JWT_REFRESH_SECRET || "qmskadlamds",
 };
