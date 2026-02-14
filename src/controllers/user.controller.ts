@@ -51,6 +51,15 @@ export async function deleteByIdHandler(req:Request,res:Response){
         data:user
     })
 }
+export async function LoginHandler(req:Request,res:Response){
+    const {username,password} = req.body;
+    const jwt = await userService.Login(username,password)
+    res.status(200).json({
+        message:"logged in succesfully",
+        success:true,
+        data:jwt
+    })
+}
 
 
 

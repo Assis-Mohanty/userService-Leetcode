@@ -9,6 +9,7 @@ export interface IUserService{
     GetUser(userId:string):Promise<IUser| null>
     UpdateUser(userId:string,update:Partial<IUser>):Promise<IUser | null >
     deleteById(userId: string): Promise<boolean>
+    GetMe(userId:string):Promise<IUser | null>
 }
 
 export class  UserService implements IUserService{
@@ -34,5 +35,11 @@ export class  UserService implements IUserService{
     }
     async deleteById(userId: string): Promise<boolean> {
         return await this.userRepository.deleteById(userId)
+    }
+    async Login(username:string, password:string):Promise<string>{
+        return await this.userRepository.Login(username,password)
+    }
+    async GetMe(userId: string):Promise<IUser | null>{
+        return await this.userRepository.GetUser(userId)
     }
 }
