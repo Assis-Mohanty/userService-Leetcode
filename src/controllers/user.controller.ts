@@ -16,8 +16,9 @@ export async function RegisterUserHandler(req:Request,res:Response){
     })
 }
 
-export async function GetUserByIdHandler(req:Request,res:Response){
-    const user = await userService.GetUser(req.params.id)
+export async function GetUserHandler(req:Request,res:Response){
+    const userPayloadId = req.get('x-user-id') as string;
+    const user = await userService.GetUser(userPayloadId)
     if(!user){
         throw new InternalServerError("Failed fetching user");
     }
@@ -28,8 +29,10 @@ export async function GetUserByIdHandler(req:Request,res:Response){
     })
 }
 
+
 export async function UpdateUserHandler(req:Request,res:Response){
-    const user = await userService.UpdateUser(req.params.id,req.body)
+    const userPayloadId = req.get('x-user-id') as string;
+    const user = await userService.UpdateUser(userPayloadId,req.body)
     if(!user){
         throw new InternalServerError("Failed updating user")
     }
@@ -40,8 +43,9 @@ export async function UpdateUserHandler(req:Request,res:Response){
     })
 }
 
-export async function deleteByIdHandler(req:Request,res:Response){
-    const user = await userService.deleteById(req.params.id)
+export async function DeleteUserHandler(req:Request,res:Response){
+    const userPayloadId = req.get('x-user-id') as string;
+    const user = await userService.deleteById(userPayloadId)
     if(!user){
         throw new InternalServerError("Failed deleting user");
     }
@@ -87,9 +91,9 @@ export async function RefreshTokenHandler(req:Request,res:Response){
     })
 }
 export async function updateRatingHandler(req:Request,res:Response){
+    const userPayloadId = req.get('x-user-id') as string;
     const {newRating} = req.body;
-    const userId = req.params.id;
-    const updatedUser = await userService.updateRating(userId,newRating);
+    const updatedUser = await userService.updateRating(userPayloadId,newRating);
     if(!updatedUser){
         throw new InternalServerError("Failed updating user rating");
     }
@@ -99,3 +103,66 @@ export async function updateRatingHandler(req:Request,res:Response){
         data:updatedUser
     })
 }
+export async function getUserByIdHandler(req: Request, res: Response) {
+  const targetUserId = req.params.id;
+
+  if (!targetUserId) {
+    throw new InternalServerError("User ID param missing");
+  }
+
+  const user = await userService.GetUser(targetUserId);
+
+  if (!user) {
+    throw new InternalServerError("Failed fetching user");
+  }
+
+  res.status(200).json({
+    message: "Fetched user successfully",
+    success: true,
+    data: user
+  });
+}
+
+export async function updateUserByIdHandler(req: Request, res: Response) {
+  const targetUserId = req.params.id;
+
+  if (!targetUserId) {
+    throw new InternalServerError("User ID param missing");
+  }
+
+  const updatedUser = await userService.UpdateUser(
+    targetUserId,
+    req.body
+  );
+
+  if (!updatedUser) {
+    throw new InternalServerError("Failed updating user");
+  }
+
+  res.status(200).json({
+    message: "Updated user successfully",
+    success: true,
+    data: updatedUser
+  });
+}
+
+export async function deleteUserByIdHandler(req: Request, res: Response) {
+  const targetUserId = req.params.id;
+
+  if (!targetUserId) {
+    throw new InternalServerError("User ID param missing");
+  }
+
+  const deletedUser = await userService.deleteById(targetUserId);
+
+  if (!deletedUser) {
+    throw new InternalServerError("Failed deleting user");
+  }
+
+  res.status(200).json({
+    message: "Deleted user successfully",
+    success: true,
+    data: deletedUser
+  });
+}
+

@@ -1,5 +1,5 @@
 import { serverConfig } from "../config"
-import { RegisterUserDto } from "../dto/user.dto"
+import { RegisterUserDto, UpdateUserDto } from "../dto/user.dto"
 import { IUser } from "../models/user.models"
 import { IUserRepository } from "../repository/user.repository"
 import { compareHashPassword, HashPassword, hashToken } from "../utils/hash/generateHashPassword"
@@ -35,7 +35,7 @@ export class  UserService implements IUserService{
     async GetUser(userId: string): Promise<IUser | null> {
         return await this.userRepository.GetUser(userId)
     }
-    async UpdateUser(userId: string, update: Partial<IUser>): Promise<IUser | null> {
+    async UpdateUser(userId: string, update: UpdateUserDto): Promise<IUser | null> {
         return await this.userRepository.UpdateUser(userId,update)
     }
     async deleteById(userId: string): Promise<boolean> {

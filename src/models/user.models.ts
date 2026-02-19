@@ -11,7 +11,6 @@ export enum RoleEnum{
     ADMIN = "admin"
 }
 
-
 export interface IUser{
     _id:Types.ObjectId;
     username:string;

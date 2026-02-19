@@ -15,5 +15,4 @@ export const updateUserSchema = z.object({
         bio: z.string().max(200).optional()
     }).optional(),
     rating: z.number().min(0).max(5).optional(),
-    role: z.enum(["user", "admin"]).optional(),
 })

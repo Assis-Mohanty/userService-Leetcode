@@ -1,3 +1,4 @@
+import { UpdateUserDto } from "../dto/user.dto";
 import { IRefreshToken, RefreshToken } from "../models/refreshTokens.model";
 import { IUser, User } from "../models/user.models";
 
@@ -5,7 +6,7 @@ export interface IUserRepository{
     Register(data:Partial<IUser>):Promise<IUser>
     // Login(username:string , password:string):Promise<IUser>
     GetUser(userId:string):Promise<IUser| null>
-    UpdateUser(userId:string,update:Partial<IUser>):Promise<IUser | null >
+    UpdateUser(userId:string,update:UpdateUserDto):Promise<IUser | null >
     deleteById(userId: string): Promise<boolean>
     findByUsername(username:string):Promise<IUser | null>
     saveRefreshToken(userId:string,tokenHash:string,expiresAt:Date,revoked:boolean):Promise<void>
